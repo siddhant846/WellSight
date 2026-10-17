@@ -1,0 +1,30 @@
+# Domain Business Rules Configuration
+# Populated from equipment manuals and environmental SOPs (T200.md, T350.md, SOP-SR, SOP-RC, SOP-WS).
+# Real operational environments only need this file edited.
+
+well_type_thresholds:
+  "T200": 15.0
+  "T350": 20.0
+  "Beam Pump": 15.0
+  "Electric Submersible Pump (ESP)": 20.0
+  "Gas Lift": 15.0
+
+regulatory_rules:
+  spill_threshold_bbl: 5.0
+  major_spill_threshold_bbl: 25.0
+  reporting_window_hours: 24.0
+  major_reporting_window_hours: 2.0
+  containment_window_hours: 4.0
+  verification_window_days: 60.0
+  late_reporting_fine_usd: 5000.0
+  unreported_fine_usd: 5000.0
+
+downtime_rules:
+  days_per_non_producing_inspection: 7
+  missed_inspection_downtime_days: 0
+  repair_deduction_enabled: false
+  consecutive_report_threshold_days: 14
+
+maintenance_rules:
+  rca_trigger_corrective_count: 3
+  rca_window_months: 12

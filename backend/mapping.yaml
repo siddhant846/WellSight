@@ -1,0 +1,83 @@
+# Mapping configuration: maps external source CSV column names to canonical database column names.
+# To adapt to any real-world production SCADA or ERP dump, simply adjust the source column names below.
+
+tables:
+  wells:
+    source_file: "data/wells.csv"
+    canonical_table: "raw_wells"
+    columns:
+      well_id: "well_id"
+      well_name: "well_name"
+      well_type: "well_type"
+      area: "area"
+      latitude: "latitude"
+      longitude: "longitude"
+      commission_date: "commission_date"
+      recorded_status: "recorded_status"
+
+  inspections:
+    source_file: "data/inspections.csv"
+    canonical_table: "raw_inspections"
+    columns:
+      inspection_id: "inspection_id"
+      well_id: "well_id"
+      inspection_date: "inspection_date"
+      wellhead_temp_c: "wellhead_temp_c"
+      air_temp_c: "air_temp_c"
+      flowline_pressure_psi: "flowline_pressure_psi"
+      choke_size: "choke_size"
+      recorded_status: "recorded_status"
+      technician: "technician"
+
+  repairs:
+    source_file: "data/repairs.csv"
+    canonical_table: "raw_repairs"
+    columns:
+      repair_id: "repair_id"
+      well_id: "well_id"
+      start_date: "start_date"
+      end_date: "end_date"
+      repair_type: "repair_type"
+      cost_usd: "cost_usd"
+      free_text_report: "free_text_report"
+
+  regulator_events:
+    source_file: "data/regulator_events.csv"
+    canonical_table: "raw_regulator_events"
+    columns:
+      event_id: "event_id"
+      well_id: "well_id"
+      event_timestamp: "event_timestamp"
+      spill_type: "spill_type"
+      initial_volume_bbl: "initial_volume_bbl"
+      reported_to_regulator_at: "reported_to_regulator_at"
+      fine_amount_usd: "fine_amount_usd"
+      regulator_status: "regulator_status"
+      description: "description"
+
+  human_notes:
+    source_file: "data/human_notes.csv"
+    canonical_table: "raw_human_notes"
+    columns:
+      note_id: "note_id"
+      well_id: "well_id"
+      author: "author"
+      created_at: "created_at"
+      note_text: "note_text"
+
+  users:
+    source_file: "data/users.csv"
+    canonical_table: "raw_users"
+    columns:
+      user_id: "user_id"
+      name: "name"
+      email: "email"
+      role: "role"
+      department: "department"
+      default_area: "default_area"
+
+# Canonical well type baseline thresholds (from Equipment Manuals)
+well_type_thresholds:
+  "Beam Pump": 10.0
+  "Electric Submersible Pump (ESP)": 15.0
+  "Gas Lift": 8.0

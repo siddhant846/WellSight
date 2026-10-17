@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+**/.venv/
+.env
+**/.env
+
+# DuckDB runtime & storage files
+*.duckdb
+*.duckdb.tmp
+*.duckdb.wal
+warehouse.duckdb
+**/warehouse.duckdb
+
+# Node / Next.js
+node_modules/
+**/node_modules/
+frontend/.next/
+frontend/out/
+
+# Testing, Scratch & Logs
+.pytest_cache/
+*.log
