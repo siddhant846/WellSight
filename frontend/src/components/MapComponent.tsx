@@ -80,8 +80,16 @@ export default function MapComponent({ wells, center, zoom }: MapComponentProps)
         scrollWheelZoom: false
       });
 
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
+      // Google Maps Hybrid Satellite Layer (Imagery + Roads + Labels)
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+      const googleTileUrl = apiKey 
+        ? `https://tile.googleapis.com/v1/2dtiles/{z}/{x}/{y}?session=${apiKey}&key=${apiKey}`
+        : "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}";
+
+      L.tileLayer(googleTileUrl, {
+        maxZoom: 20,
+        subdomains: ["mt0", "mt1", "mt2", "mt3"],
+        attribution: '&copy; <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer">Google Maps</a>'
       }).addTo(map);
 
       mapInstanceRef.current = map;
