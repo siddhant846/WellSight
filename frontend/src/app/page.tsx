@@ -6,7 +6,6 @@ import {
   Sparkles,
   Layers,
   Database,
-  User,
   RefreshCw,
   AlertTriangle,
   FileText,
@@ -21,9 +20,20 @@ import {
   Trash2,
   CheckCircle2,
   Zap,
-  Info
+  Info,
+  Code2,
+  LayoutGrid,
+  MessageSquare
 } from "lucide-react";
-import VisualRenderer, { VisualSpec } from "@/components/VisualRenderer";
+import VisualRenderer, {
+  VisualSpec,
+  OverviewTableCard,
+  LineChartCard,
+  BarChartCard,
+  MapCard,
+  HeatmapCard,
+  StatusCard
+} from "@/components/VisualRenderer";
 import CitationDrawer from "@/components/CitationDrawer";
 import CorrectionModal from "@/components/CorrectionModal";
 
@@ -48,147 +58,104 @@ interface UserProfile {
 
 const DEFAULT_USERS: UserProfile[] = [
   {
+    user_id: "U-101",
+    name: "Emily Carter",
+    role: "production_supervisor",
+    department: "Southwest Production",
+    default_area: "Southwest Block 23"
+  },
+  {
     user_id: "U-201",
     name: "Michael Turner",
-    role: "Production Supervisor",
+    role: "production_supervisor",
     department: "Northeast Production",
     default_area: "Northeast Block 8"
   },
   {
     user_id: "U-202",
     name: "Jessica Reed",
-    role: "Field Inspector",
+    role: "field_inspector",
     department: "Northeast Production",
     default_area: "Northeast Block 7"
   },
   {
     user_id: "U-204",
     name: "Tyler Hughes",
-    role: "Field Operator",
+    role: "field_operator",
     department: "Northeast Production",
     default_area: "Northeast Block 8"
   },
   {
     user_id: "U-102",
     name: "Jake Morales",
-    role: "Field Operator",
-    department: "Southwest Production",
-    default_area: "Southwest Block 23"
-  },
-  {
-    user_id: "U-101",
-    name: "Emily Carter",
-    role: "Production Supervisor",
+    role: "field_operator",
     department: "Southwest Production",
     default_area: "Southwest Block 23"
   },
   {
     user_id: "U-401",
     name: "Laura Simmons",
-    role: "HSE Officer",
+    role: "hse_officer",
     department: "Health, Safety & Environment",
     default_area: "All Areas"
   }
 ];
 
-const CATEGORIZED_PROMPTS = [
+const QUICK_QUESTIONS = [
   {
-    category: "Surveillance & Status (A1)",
-    icon: Droplets,
-    prompts: [
-      { label: "Q1. WELL-0001 producing status card", query: "Is WELL-0001 producing oil right now? When was it last inspected, and by whom? Show me its status card." },
-      { label: "Q2. Northeast Block 8 down wells", query: "Which wells in Northeast Block 8 are not producing oil right now, and why? Show them in a table." },
-      { label: "Q3. WELL-0001 13-week line chart", query: "Show a line chart of WELL-0001's wellhead temperature against air temperature for the last 13 weeks, and mark when it was not producing oil." }
-    ]
+    label: "Q1. WELL-0001 producing status card",
+    query: "Is WELL-0001 producing oil right now? When was it last inspected, and by whom? Show me its status card."
   },
   {
-    category: "Downtime & Maintenance (A1)",
-    icon: TrendingDown,
-    prompts: [
-      { label: "Q5. WELL-0001 downtime in 2025", query: "How many days was WELL-0001 down in 2025?" },
-      { label: "Q6. Top downtime in NE Block 7", query: "Which 3 wells in Northeast Block 7 had the most downtime in the last 4 months? Show a bar chart." },
-      { label: "Q14. Pump jack RCA candidates", query: "Which wells in Northeast Block 7 need a root-cause analysis on their pump jack?" }
-    ]
+    label: "Q2. Northeast Block 8 down wells",
+    query: "Which wells in Northeast Block 8 are not producing oil right now, and why? Show them in a table."
   },
   {
-    category: "Spills & Compliance (A1)",
-    icon: AlertTriangle,
-    prompts: [
-      { label: "Q4. WELL-0001 4-year spills table", query: "How many oil spills has WELL-0001 had in the last 4 years, and how much oil in total? List them in a table." },
-      { label: "Q7. NE Block 8 spills map", query: "Show on a map every well in Northeast Block 8 with a real spill in the last 90 days." },
-      { label: "Q8. 2026 spills area heatmap", query: "Show a heatmap of 2026 spills by geographic area and month." },
-      { label: "Q9. WELL-0001 rules broken", query: "Which rules has WELL-0001 broken in the last 12 months, and what is still open?" },
-      { label: "Q10. SW Block 24 containment breaches", query: "In Southwest Block 24, which spills in the last 90 days were not contained within the SOP time limit?" }
-    ]
+    label: "Q3. WELL-0001 13-week line chart",
+    query: "Show a line chart of WELL-0001's wellhead temperature against air temperature for the last 13 weeks, and mark when it was not producing oil."
   },
   {
-    category: "Memory & Conflicts (A2 & B)",
-    icon: Wrench,
-    prompts: [
-      { label: "Q11/Q16. Yesterday's wells repair cost", query: "For the three wells we discussed yesterday, what have repairs cost this year?" },
-      { label: "Q12. Correct WELL-0164 temp (41.0°C)", query: "The 15 Oct reading for WELL-0164 is wrong. The handheld thermal gun used in that inspection was faulty; the field crew re-measured the wellhead at 41.0 °C." },
-      { label: "Q13. Correct WELL-0151 spill (5.4 bbl)", query: "The AI estimated the 24 Sep spill at WELL-0151 as 4.5 bbl. The field crew measured 5.4 bbl." },
-      { label: "Q14. Rule: T350 RCA after 2 repairs", query: "Note for all T350 wells: our team now wants a pump jack root-cause analysis after 2 repairs, not 3." },
-      { label: "Q16. Planned downtime on WELL-0007?", query: "Is any downtime planned for WELL-0007?" },
-      { label: "Q17. WELL-0175 running fine dispute", query: "WELL-0175 is running fine." },
-      { label: "Q18. WELL-0101 spill real oil?", query: "Was the 20 Aug spill at WELL-0101 real oil?" }
-    ]
+    label: "Q5. WELL-0001 downtime in 2025",
+    query: "How many days was WELL-0001 down in 2025?"
+  },
+  {
+    label: "Q6. Top downtime in NE Block 7",
+    query: "Which 3 wells in Northeast Block 7 had the most downtime in the last 4 months? Show a bar chart."
+  },
+  {
+    label: "Q14. Pump jack RCA candidates",
+    query: "Which wells in Northeast Block 7 need a root-cause analysis on their pump jack?"
+  },
+  {
+    label: "Q4. WELL-0001 4-year spills",
+    query: "How many oil spills has WELL-0001 had in the last 4 years, and how much oil in total? List them in a table."
   }
 ];
 
 export default function Home() {
   const [users, setUsers] = useState<UserProfile[]>(DEFAULT_USERS);
   const [activeUser, setActiveUser] = useState<UserProfile>(DEFAULT_USERS[0]);
-  const [userMemories, setUserMemories] = useState<any[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedCitation, setSelectedCitation] = useState<string | null>(null);
   const [showCorrectionModal, setShowCorrectionModal] = useState(false);
-  const [showMemoryModal, setShowMemoryModal] = useState(false);
   const [isReingesting, setIsReingesting] = useState(false);
-  const [backendHealth, setBackendHealth] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<"dashboard" | "chat">("dashboard");
+  const [activeCardData, setActiveCardData] = useState<any>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load user profiles, health, & memories
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/health")
-      .then((res) => res.json())
-      .then((data) => setBackendHealth(data))
-      .catch(() => {});
-
     fetch("http://127.0.0.1:8000/api/users")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setUsers(data);
-          setActiveUser(data[0]);
         }
       })
       .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (!activeUser) return;
-    fetch(`http://127.0.0.1:8000/api/users/${activeUser.user_id}/memory`)
-      .then((res) => res.json())
-      .then((data) => setUserMemories(Array.isArray(data) ? data : []))
-      .catch(() => {});
-  }, [activeUser]);
-
-  // Initial welcome message tailored to active user
-  useEffect(() => {
-    setMessages([
-      {
-        id: "msg-welcome",
-        sender: "copilot",
-        text: `Welcome back, **${activeUser.name}**! I am your **WellSight** assistant.\n\nAll well performance, downtime, and compliance evaluations are grounded in **47,172 verified operational records** and executed strictly via deterministic code rules:\n- **Thermal Surveillance**: Producing status is calculated strictly from $\Delta T = T_{\\text{wellhead}} - T_{\\text{air}} \\ge \\text{Threshold}$. Stale SCADA database statuses are bypassed.\n- **Downtime Accounting**: Exactly $7 \\text{ days} \\times \\text{count of non-producing inspections}$. Repair duration never alters or subtracts from downtime.\n- **Environmental Spills**: $\\ge 5.0\\text{ bbl}$ must be reported within 24 hours. Approved corrections override original estimates.\n\nPick a quick question below or ask in plain English:`,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        citations: ["[DOC-MAN-BP-001 § 2.4]", "[SOP-OPS-DOWNTIME-202 § 2.1]", "[SOP-ENV-SPILL-101 § 2.1]"]
-      }
-    ]);
-  }, [activeUser.user_id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -197,6 +164,9 @@ export default function Home() {
   const handleSendMessage = async (textToSend?: string) => {
     const query = textToSend || input;
     if (!query.trim() || loading) return;
+
+    // Switch to chat view when a query is asked
+    setViewMode("chat");
 
     const userMsg: ChatMessage = {
       id: `msg-${Date.now()}`,
@@ -271,32 +241,69 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden text-slate-100 bg-[#070b14]">
-      {/* Top Navbar */}
-      <header className="h-16 px-4 sm:px-6 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md flex items-center justify-between shrink-0 z-20">
+      {/* ------------------------------------------------------------- */}
+      {/* TOP NAVBAR (Exact match to reference image) */}
+      {/* ------------------------------------------------------------- */}
+      <header className="h-16 px-4 sm:px-6 border-b border-[#14293f] bg-[#07101d] flex items-center justify-between shrink-0 z-20">
+        {/* Brand Left */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-400 p-0.5 flex items-center justify-center shadow-lg shadow-cyan-950/50">
-            <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-              <Droplets className="w-5 h-5 text-cyan-400" />
-            </div>
+          <div className="w-9 h-9 rounded-full bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center shadow-lg shadow-cyan-950/60">
+            <Droplets className="w-5 h-5 text-cyan-400" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="font-bold text-sm tracking-wide text-slate-100 uppercase">WellSight</h1>
-              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-800/50">
+            <div className="flex items-center gap-2.5">
+              <span className="font-extrabold text-sm tracking-wider text-white uppercase font-sans">
+                WELLSIGHT
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-500/40">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 47k Rows Indexed
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 hidden sm:block">Deterministic Well Surveillance & Regulatory Audit Engine</p>
+            <p className="text-[11px] text-slate-400 hidden sm:block">
+              Deterministic Well Surveillance & Regulatory Audit Engine
+            </p>
           </div>
         </div>
 
-        {/* Action Controls & User Picker */}
-        <div className="flex items-center gap-2.5">
+        {/* Right Controls */}
+        <div className="flex items-center gap-2">
+          {/* View Mode Toggle */}
+          <div className="flex items-center bg-[#0b1726] p-0.5 rounded-xl border border-[#1b3552]">
+            <button
+              onClick={() => setViewMode("dashboard")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                viewMode === "dashboard"
+                  ? "bg-cyan-600 text-white shadow"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+              title="Dashboard Grid View"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Dashboard</span>
+            </button>
+            <button
+              onClick={() => setViewMode("chat")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                viewMode === "chat"
+                  ? "bg-cyan-600 text-white shadow"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+              title="AI Copilot Chat"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Copilot AI</span>
+              {messages.length > 0 && (
+                <span className="w-4 h-4 rounded-full bg-cyan-400 text-slate-950 text-[10px] font-bold flex items-center justify-center">
+                  {messages.length}
+                </span>
+              )}
+            </button>
+          </div>
+
           <button
             onClick={() => setShowCorrectionModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-cyan-400 transition-colors shadow-sm"
-            title="Manage Scoped Overlays"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#0b1726] hover:bg-[#14293f] border border-[#1b3552] text-slate-300 hover:text-cyan-400 transition-colors shadow-sm"
           >
             <Layers className="w-3.5 h-3.5 text-cyan-400" />
             <span className="hidden sm:inline">Corrections</span>
@@ -305,8 +312,7 @@ export default function Home() {
           <button
             onClick={handleReingest}
             disabled={isReingesting}
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-300 transition-colors shadow-sm disabled:opacity-50"
-            title="Re-runs DuckDB ingest from mapping.yaml"
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#0b1726] hover:bg-[#14293f] border border-[#1b3552] text-slate-300 transition-colors shadow-sm disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${isReingesting ? "animate-spin" : ""}`} />
             <span>Re-Ingest</span>
@@ -314,30 +320,27 @@ export default function Home() {
 
           <button
             onClick={handleClearChat}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-900 border border-transparent hover:border-slate-800 transition-colors"
-            title="Clear Chat History"
+            className="p-2 rounded-xl text-slate-400 hover:text-rose-400 bg-[#0b1726] hover:bg-[#14293f] border border-[#1b3552] transition-colors"
+            title="Clear Chat"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
 
-          {/* User Profile Selector */}
-          <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
-            <button
-              onClick={() => setShowMemoryModal(true)}
-              className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-cyan-400 transition-colors relative"
-              title="Private User Memory"
-            >
-              <Brain className="w-4 h-4 text-cyan-400" />
-              {userMemories.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-cyan-400 rounded-full border-2 border-slate-950" />
-              )}
-            </button>
+          <button
+            onClick={() => alert("WellSight Deterministic Analytical Engine: Online (DuckDB + Gemini Function Calling)")}
+            className="p-2 rounded-xl text-slate-400 hover:text-cyan-400 bg-[#0b1726] hover:bg-[#14293f] border border-[#1b3552] transition-colors"
+            title="Engine Specs"
+          >
+            <Code2 className="w-3.5 h-3.5" />
+          </button>
 
-            <div className="flex items-center gap-2 bg-slate-900/90 px-2.5 py-1.5 rounded-xl border border-slate-800">
-              <div className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-bold border border-cyan-500/30">
+          {/* User Profile Pill */}
+          <div className="flex items-center gap-2 pl-2 border-l border-[#14293f]">
+            <div className="flex items-center gap-2 bg-[#0b1726] px-3 py-1.5 rounded-xl border border-[#1b3552]">
+              <div className="w-6 h-6 rounded-full bg-cyan-600/30 text-cyan-300 flex items-center justify-center text-xs font-bold border border-cyan-500/30">
                 {activeUser.name.charAt(0)}
               </div>
-              <div className="text-left">
+              <div className="text-left hidden sm:block">
                 <select
                   value={activeUser.user_id}
                   onChange={(e) => {
@@ -359,231 +362,231 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Workspace */}
+      {/* ------------------------------------------------------------- */}
+      {/* QUICK QUESTIONS STRIP (Exact match to reference image) */}
+      {/* ------------------------------------------------------------- */}
+      <div className="px-4 sm:px-6 py-2.5 bg-[#050b14] border-b border-[#14293f] overflow-x-auto flex items-center gap-2.5 shrink-0 no-scrollbar z-10">
+        <span className="text-[11px] text-cyan-400 uppercase font-extrabold shrink-0 tracking-wider flex items-center gap-1.5">
+          <Zap className="w-3.5 h-3.5 text-cyan-400 fill-cyan-400" /> QUICK QUESTIONS:
+        </span>
+        {QUICK_QUESTIONS.map((q, idx) => (
+          <button
+            key={idx}
+            onClick={() => handleSendMessage(q.query)}
+            className="whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium bg-[#0b1726] hover:bg-[#14293f] text-slate-200 hover:text-cyan-300 border border-[#1b3552] hover:border-cyan-500/50 transition-all flex items-center gap-1 shrink-0 cursor-pointer shadow-sm"
+          >
+            <span>{q.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* MAIN CONTENT AREA */}
+      {/* ------------------------------------------------------------- */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Chat Thread */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden">
-          {/* Categorized Quick Question Chips */}
-          <div className="px-4 sm:px-6 py-2 bg-slate-950/60 border-b border-slate-800/60 overflow-x-auto flex items-center gap-3 shrink-0 no-scrollbar">
-            <span className="text-[10px] text-slate-400 uppercase font-bold shrink-0 tracking-wider flex items-center gap-1">
-              <Zap className="w-3 h-3 text-cyan-400" /> Quick Questions:
-            </span>
-            {CATEGORIZED_PROMPTS.map((cat, ci) => (
-              <div key={ci} className="flex items-center gap-1.5 shrink-0">
-                {cat.prompts.map((p, pi) => (
-                  <button
-                    key={pi}
-                    onClick={() => handleSendMessage(p.query)}
-                    className="whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-medium bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-cyan-300 border border-slate-800 hover:border-cyan-500/40 transition-all flex items-center gap-1"
-                  >
-                    <span>{p.label}</span>
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-
-          {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto px-4 md:px-8 py-5 space-y-5">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex gap-3 max-w-4xl ${
-                  msg.sender === "user" ? "ml-auto justify-end" : "mr-auto"
-                }`}
-              >
-                {msg.sender === "copilot" && (
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-500 p-0.5 shrink-0 shadow-md">
-                    <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 text-cyan-400" />
-                    </div>
-                  </div>
-                )}
-
-                <div
-                  className={`flex flex-col space-y-2 rounded-2xl p-4 text-sm max-w-2xl shadow-lg ${
-                    msg.sender === "user"
-                      ? "bg-cyan-600 text-white rounded-tr-none"
-                      : "bg-slate-900/90 border border-slate-800 text-slate-200 rounded-tl-none backdrop-blur-md"
-                  }`}
-                >
-                  {/* Sender Header */}
-                  <div className="flex items-center justify-between text-xs text-slate-400 pb-1 border-b border-slate-700/40">
-                    <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-                      {msg.sender === "user" ? activeUser.name : "WellSight"}
-                      {msg.sender === "copilot" && (
-                        <span className="text-[10px] text-cyan-400 font-mono font-normal">Grounded</span>
-                      )}
-                    </span>
-                    <span className="text-[10px] opacity-75">{msg.timestamp}</span>
-                  </div>
-
-                  {/* Conflict Notice Banner */}
-                  {msg.conflicts && msg.conflicts.length > 0 && (
-                    <div className="bg-amber-950/40 border border-amber-500/50 rounded-xl p-3 my-2 text-xs space-y-2 text-amber-200 animate-in fade-in shadow-inner">
-                      <div className="flex items-center gap-2 font-bold text-amber-400 text-xs uppercase tracking-wide">
-                        <AlertTriangle className="w-4 h-4 text-amber-400" />
-                        <span>Conflicting Evidence & Dispute Detected</span>
-                      </div>
-                      {msg.conflicts.map((c, ci) => (
-                        <div key={ci} className="space-y-1 bg-amber-950/40 p-2 rounded border border-amber-900/50">
-                          <div className="font-semibold text-slate-100">{c.topic}</div>
-                          <div className="text-slate-300 text-[11px]"><b className="text-amber-400">Perspective A:</b> {c.perspective_a}</div>
-                          <div className="text-slate-300 text-[11px]"><b className="text-amber-400">Perspective B:</b> {c.perspective_b}</div>
-                          <div className="text-emerald-300 text-[11px] font-semibold mt-1 flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>Grounded Ground Truth: {c.resolution}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Message Text */}
-                  <div className="whitespace-pre-line leading-relaxed font-sans text-xs sm:text-sm">
-                    {msg.text}
-                  </div>
-
-                  {/* Inline Visual Specs (Cards, Line, Bar, Map, Heatmap, Table) */}
-                  {msg.visualSpecs && msg.visualSpecs.length > 0 && (
-                    <div className="space-y-3 pt-2">
-                      {msg.visualSpecs.map((spec, sIdx) => (
-                        <VisualRenderer
-                          key={sIdx}
-                          spec={spec}
-                          onCitationClick={(id) => setSelectedCitation(id)}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Clickable Grounded Citations Footer */}
-                  {msg.citations && msg.citations.length > 0 && (
-                    <div className="pt-2 border-t border-slate-800/60 mt-2">
-                      <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1 flex items-center gap-1">
-                        <Database className="w-3 h-3 text-cyan-400" /> Verified Record Citations (Click to inspect):
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {msg.citations.map((c, ci) => (
-                          <button
-                            key={ci}
-                            onClick={() => setSelectedCitation(c)}
-                            className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-slate-950/90 hover:bg-cyan-950/80 text-cyan-300 border border-slate-700/60 hover:border-cyan-400 transition-all flex items-center gap-1 shadow-sm"
-                          >
-                            <span>{c}</span>
-                            <ChevronRight className="w-3 h-3 opacity-60" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {msg.sender === "user" && (
-                  <div className="w-8 h-8 rounded-xl bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 shrink-0 flex items-center justify-center text-xs font-bold">
-                    {activeUser.name.charAt(0)}
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {loading && (
-              <div className="flex gap-3 mr-auto max-w-xl animate-pulse">
-                <div className="w-8 h-8 rounded-xl bg-cyan-600/20 p-0.5 shrink-0 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-cyan-400 animate-spin" />
-                </div>
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-none p-4 text-xs text-slate-400 flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" />
-                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.2s]" />
-                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.4s]" />
-                  <span>Evaluating thermal differentials and querying 41k records in DuckDB warehouse...</span>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input Bar */}
-          <div className="p-4 bg-slate-950/90 border-t border-slate-800/80 backdrop-blur-md">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendMessage();
-              }}
-              className="max-w-4xl mx-auto flex items-center gap-2 bg-slate-900/90 rounded-2xl border border-slate-700/80 p-1.5 focus-within:border-cyan-400 transition-all shadow-2xl"
-            >
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={`Ask anything about well status, downtime, repairs, or spills... (Logged in as ${activeUser.name})`}
-                className="flex-1 bg-transparent px-4 py-2 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
-              />
-              <button
-                type="submit"
-                disabled={!input.trim() || loading}
-                className="p-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold transition-all disabled:opacity-40 disabled:hover:bg-cyan-600 shadow flex items-center gap-1"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </form>
-          </div>
-        </div>
-
-        {/* Citation Slide-out Inspector Drawer */}
-        <CitationDrawer
-          citationId={selectedCitation}
-          onClose={() => setSelectedCitation(null)}
-        />
-
-        {/* Scoped Correction Overlay Modal */}
-        <CorrectionModal
-          isOpen={showCorrectionModal}
-          onClose={() => setShowCorrectionModal(false)}
-          currentUser={activeUser.name}
-          onCorrectionAdded={() => {
-            handleSendMessage("Show active corrections and explain their operational impact.");
-          }}
-        />
-
-        {/* User Private Memory Modal */}
-        {showMemoryModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
-            <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-5 space-y-4 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2">
-                  <Brain className="w-5 h-5 text-cyan-400" />
-                  <h3 className="font-bold text-slate-100 text-sm">Private Memory ({activeUser.name})</h3>
-                </div>
-                <button
-                  onClick={() => setShowMemoryModal(false)}
-                  className="text-slate-400 hover:text-slate-200"
-                >
-                  ✕
-                </button>
+        {/* VIEW 1: 6-CARD DASHBOARD GRID (Exact match to screenshot!) */}
+        {viewMode === "dashboard" ? (
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-[#040811]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-[1700px] mx-auto pb-20">
+              {/* Row 1 */}
+              <div className="h-[360px]">
+                <OverviewTableCard
+                  onCitationClick={(cid) => setSelectedCitation(cid)}
+                />
               </div>
 
-              <div className="text-xs text-slate-400 flex items-center gap-1.5">
-                <Info className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Private user memories are isolated per user_id (<b>{activeUser.user_id}</b>).</span>
+              <div className="h-[360px]">
+                <LineChartCard />
               </div>
 
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {userMemories.length === 0 ? (
-                  <div className="text-center py-6 text-slate-500 text-xs">No private memories stored yet for this user.</div>
-                ) : (
-                  userMemories.map((m) => (
-                    <div key={m.memory_id} className="p-2.5 bg-slate-950 rounded-lg border border-slate-800 text-xs">
-                      <div className="text-cyan-400 font-mono font-semibold">{m.memory_key}</div>
-                      <div className="text-slate-200 mt-0.5">{m.memory_value}</div>
-                    </div>
-                  ))
-                )}
+              <div className="h-[360px]">
+                <BarChartCard />
+              </div>
+
+              {/* Row 2 */}
+              <div className="h-[360px]">
+                <MapCard />
+              </div>
+
+              <div className="h-[360px]">
+                <HeatmapCard />
+              </div>
+
+              <div className="h-[360px]">
+                <StatusCard
+                  onCitationClick={(cid) => setSelectedCitation(cid)}
+                />
               </div>
             </div>
           </div>
+        ) : (
+          /* VIEW 2: AI COPILOT CHAT THREAD WITH INLINE VISUAL CARDS */
+          <div className="flex-1 overflow-y-auto px-4 md:px-8 py-5 space-y-5 bg-[#040811]">
+            {messages.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 max-w-md mx-auto my-auto">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-600 to-emerald-500 p-0.5 mb-4 shadow-xl shadow-cyan-950/50">
+                  <div className="w-full h-full bg-[#071322] rounded-[14px] flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-cyan-400" />
+                  </div>
+                </div>
+                <h3 className="font-bold text-white text-base mb-1">WellSight Intelligence Copilot</h3>
+                <p className="text-xs text-slate-400 mb-4">
+                  Ask any question about wells, downtime, or spills. Answers are generated with exact evidence citations and interactive visual cards.
+                </p>
+                <div className="space-y-2 w-full text-left">
+                  {QUICK_QUESTIONS.slice(0, 3).map((q, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSendMessage(q.query)}
+                      className="w-full p-2.5 rounded-xl bg-[#0b1726] hover:bg-[#14293f] border border-[#1b3552] text-xs text-slate-300 hover:text-cyan-300 transition-all flex items-center justify-between"
+                    >
+                      <span>{q.label}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex gap-3 max-w-5xl ${
+                    msg.sender === "user" ? "ml-auto justify-end" : "mr-auto"
+                  }`}
+                >
+                  {msg.sender === "copilot" && (
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-500 p-0.5 shrink-0 shadow-md">
+                      <div className="w-full h-full bg-[#071322] rounded-[10px] flex items-center justify-center">
+                        <Sparkles className="w-4 h-4 text-cyan-400" />
+                      </div>
+                    </div>
+                  )}
+
+                  <div
+                    className={`flex flex-col space-y-2 rounded-2xl p-4 text-sm max-w-3xl shadow-xl ${
+                      msg.sender === "user"
+                        ? "bg-cyan-600 text-white rounded-tr-none"
+                        : "bg-[#0b1726] border border-[#14293f] text-slate-200 rounded-tl-none backdrop-blur-md"
+                    }`}
+                  >
+                    {/* Header */}
+                    <div className="flex items-center justify-between text-xs text-slate-400 pb-1 border-b border-[#14293f]">
+                      <span className="font-semibold text-slate-300 flex items-center gap-1.5">
+                        {msg.sender === "user" ? activeUser.name : "WellSight"}
+                        {msg.sender === "copilot" && (
+                          <span className="text-[10px] text-cyan-400 font-mono font-normal">Grounded</span>
+                        )}
+                      </span>
+                      <span className="text-[10px] opacity-75">{msg.timestamp}</span>
+                    </div>
+
+                    {/* Conflict Notice Banner */}
+                    {msg.conflicts && msg.conflicts.length > 0 && (
+                      <div className="bg-amber-950/40 border border-amber-500/50 rounded-xl p-3 my-2 text-xs space-y-2 text-amber-200 shadow-inner">
+                        <div className="flex items-center gap-2 font-bold text-amber-400 text-xs uppercase tracking-wide">
+                          <AlertTriangle className="w-4 h-4 text-amber-400" />
+                          <span>Conflicting Evidence & Dispute Detected</span>
+                        </div>
+                        {msg.conflicts.map((c, ci) => (
+                          <div key={ci} className="space-y-1 bg-amber-950/40 p-2 rounded border border-amber-900/50">
+                            <div className="font-semibold text-slate-100">{c.topic}</div>
+                            <div className="text-slate-300 text-[11px]"><b className="text-amber-400">Perspective A:</b> {c.perspective_a}</div>
+                            <div className="text-slate-300 text-[11px]"><b className="text-amber-400">Perspective B:</b> {c.perspective_b}</div>
+                            <div className="text-emerald-300 text-[11px] font-semibold mt-1 flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                              <span>Grounded Ground Truth: {c.resolution}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Message Text */}
+                    <div className="whitespace-pre-line leading-relaxed font-sans text-xs sm:text-sm">
+                      {msg.text}
+                    </div>
+
+                    {/* Inline Visual Specs (Cards, Line, Bar, Map, Heatmap, Table) */}
+                    {msg.visualSpecs && msg.visualSpecs.length > 0 && (
+                      <div className="space-y-4 pt-2">
+                        {msg.visualSpecs.map((spec, sIdx) => (
+                          <div key={sIdx} className="w-full">
+                            <VisualRenderer
+                              spec={spec}
+                              onCitationClick={(cid) => setSelectedCitation(cid)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Citations Footer */}
+                    {msg.citations && msg.citations.length > 0 && (
+                      <div className="pt-2 border-t border-[#14293f] flex flex-wrap items-center gap-1.5">
+                        <span className="text-[10px] text-slate-400 font-semibold mr-1">Evidence Citations:</span>
+                        {msg.citations.map((c, cIdx) => (
+                          <button
+                            key={cIdx}
+                            onClick={() => setSelectedCitation(c.replace(/[\[\]]/g, ""))}
+                            className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#071322] hover:bg-cyan-950 text-cyan-300 hover:text-cyan-200 border border-[#1b3552] hover:border-cyan-500/50 transition-colors cursor-pointer"
+                          >
+                            {c}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
         )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* FIXED FLOATING INPUT BAR */}
+        {/* ------------------------------------------------------------- */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-[#07101d]/90 backdrop-blur-md border-t border-[#14293f] z-20">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendMessage();
+            }}
+            className="max-w-4xl mx-auto flex items-center gap-2"
+          >
+            <input
+              type="text"
+              placeholder="Ask WellSight Copilot anything about wells, downtime, or compliance..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              className="flex-1 bg-[#0b1726] border border-[#1b3552] rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-cyan-500 transition-colors shadow-inner"
+            />
+            <button
+              type="submit"
+              disabled={loading || !input.trim()}
+              className="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs sm:text-sm flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-cyan-950"
+            >
+              <span>{loading ? "Analyzing..." : "Ask"}</span>
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </form>
+        </div>
       </div>
+
+      {/* Citation Slide-Over Drawer */}
+      <CitationDrawer
+        citationId={selectedCitation}
+        onClose={() => setSelectedCitation(null)}
+      />
+
+      {/* Scoped Correction Overlays Modal */}
+      {showCorrectionModal && (
+        <CorrectionModal
+          isOpen={showCorrectionModal}
+          currentUser={activeUser.user_id}
+          onClose={() => setShowCorrectionModal(false)}
+        />
+      )}
     </div>
   );
 }
